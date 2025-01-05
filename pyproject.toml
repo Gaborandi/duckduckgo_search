@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "duckduckgo_search"
+description = "Search for words, documents, images, news, maps and text translation using DuckDuckGo.com and LLMs"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT License" }
+keywords = ["python", "duckduckgo"]
+authors = [
+  { name = "Ahmed Alameldin" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "click>=8.1.7",
+    "primp>=0.9.2",
+    "lxml>=5.3.0",
+    "watchdog>=3.0.0",  # For file system monitoring
+    "python-magic>=0.4.27",  # For file type detection
+    "watchdog>=3.0.0",
+    "nltk>=3.8.1",
+    "beautifulsoup4>=4.12.2",
+  #  "python-docx2txt >=0.8 ",
+    "PyMuPDF>=1.23.6",
+    "pdfminer.six>=20221105",
+    "pytesseract>=0.3.10",
+    "Pillow>=10.0.0",
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.2",
+    "langdetect>=1.0.9",
+    "numpy" , #>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "rank-bm25>=0.2.2",
+    "Whoosh>=2.7.4"
+]
+dynamic = ["version"]
+
+[project.urls]
+"Homepage" = "https://github.com/Gaborandi/duckduckgo_search"
+
+[project.scripts]
+ddgs = "duckduckgo_search.cli:safe_entry_point"
+
+[tool.setuptools.dynamic]
+version = { attr = "duckduckgo_search.version.__version__" }
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.13.0",
+    "pytest>=8.3.4",
+    "pytest-dependency>=0.6.0",
+    "ruff>=0.8.3",
+]
+
+[tool.ruff]
+line-length = 120
+exclude = ["tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # Pyflakes
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I",   # isort
+]
+
+[tool.mypy]
+python_version = "3.8"
+strict = true
+exclude = ["cli\\.py$", "__main__\\.py$", "tests/", "build/"]
+
