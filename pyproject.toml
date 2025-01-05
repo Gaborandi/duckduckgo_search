@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "duckduckgo_search"
-description = "Search for words, documents, images, news, maps and text translation using the DuckDuckGo.com search engine."
+description = "Search for words, documents, images, news, maps and text translation using DuckDuckGo.com and LLMs"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT License"}
+license = { text = "MIT License" }
 keywords = ["python", "duckduckgo"]
 authors = [
-  {name = "deedy5"}
+  { name = "Ahmed Alameldin" }
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -35,14 +35,14 @@ dependencies = [
 ]
 dynamic = ["version"]
 
-[project.urls]  # Optional
-"Homepage" = "https://github.com/deedy5/duckduckgo_search"
+[project.urls]
+"Homepage" = "https://github.com/Gaborandi/duckduckgo_search"
 
 [project.scripts]
 ddgs = "duckduckgo_search.cli:safe_entry_point"
 
 [tool.setuptools.dynamic]
-version = {attr = "duckduckgo_search.version.__version__"}
+version = { attr = "duckduckgo_search.version.__version__" }
 
 [project.optional-dependencies]
 dev = [
@@ -58,15 +58,16 @@ exclude = ["tests"]
 
 [tool.ruff.lint]
 select = [
-    "E",  # pycodestyle
-    "F",  # Pyflakes
+    "E",   # pycodestyle
+    "F",   # Pyflakes
     "UP",  # pyupgrade
-    "B",  # flake8-bugbear
-    "SIM",  # flake8-simplify
-    "I",  # isort
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I",   # isort
 ]
 
 [tool.mypy]
 python_version = "3.8"
 strict = true
-exclude = ['cli\.py$', '__main__\.py$', "tests/", "build/"]
+exclude = ["cli\\.py$", "__main__\\.py$", "tests/", "build/"]
+
