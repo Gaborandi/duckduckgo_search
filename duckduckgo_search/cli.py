@@ -406,5 +406,167 @@ def news(keywords, region, safesearch, timelimit, max_results, output, proxy, ve
     else:
         _print_data(data)
 
+###########################################
+@cli.command()
+@click.option("-q", "--query", required=True, help="Search query")
+@click.option("-p", "--paths", required=True, multiple=True, help="Paths to search")
+@click.option("-i", "--index-path", required=True, help="Path to store search index")
+@click.option("-t", "--search-type", default="combined", 
+              type=click.Choice(["keyword", "semantic", "combined"]),
+              help="Type of search to perform")
+@click.option("-w", "--include-web", is_flag=True, default=True,
+              help="Include web results in search")
+@click.option("-l", "--local-results", default=10, help="Maximum local results")
+@click.option("-wr", "--web-results", default=10, help="Maximum web results")
+@click.option("-s", "--min-score", default=0.1, help="Minimum relevance score")
+@click.option("-a", "--analyze", is_flag=True, help="Perform AI analysis of results")
+@click.option("--watch", is_flag=True, help="Watch for new results")
+@click.option("-o", "--output", help="Save results to file (json/csv)")
+@click.option("-p", "--proxy", help="Proxy for web requests")
+@click.option("-v", "--verify", default=True, help="Verify SSL certificates")
+def unified_search(
+    query, paths, index_path, search_type, include_web,
+    local_results, web_results, min_score, analyze,
+    watch, output, proxy, verify
+):
+    """Perform unified search across local files and web."""
+    try:
+        # Initialize unified search
+        search = UnifiedSearch(
+            monitored_paths=paths,
+            index_path=index_path,
+            proxy=_expand_proxy_tb_alias(proxy)
+        )
+
+        # Index existing files with progress bar
+        with click.progressbar(
+            length=100, label="Indexing files"
+        ) as bar:
+            def progress_callback(file_path, current, total):
+                bar.update(current / total * 100)
+            search.index_existing_files(callback=progress_callback)
+
+        # Perform search
+        results = list(search.search(
+            query=query,
+            search_type=search_type,
+            include_web=include_web,
+            max_local_results=local_results,
+            max_web_results=web_results,
+            min_score=min_score
+        ))
+
+        if analyze:
+            analysis = search.analyze_results(query, results)
+            click.echo("\nAI Analysis:")
+            click.echo(json_dumps(analysis))
+
+        if output:
+            _save_data(query, results, "unified_search", output)
+        
+        if watch:
+            click.echo("\nWatching for new results (Ctrl+C to stop)...")
+            def result_callback(result):
+                click.echo(f"\nNew result found: {result.title}")
+            search.watch_query(query, result_callback)
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                pass
+        else:
+            _print_results(results)
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+
+def _print_results(results):
+    """Print search results."""
+    for i, result in enumerate(results, 1):
+        click.echo(f"\n{i}. {'[LOCAL]' if result.source == 'local' else '[WEB]'} "
+                  f"{result.title}")
+        if result.url:
+            click.echo(f"URL: {result.url}")
+        if result.file_path:
+            click.echo(f"Path: {result.file_path}")
+        click.echo(f"Score: {result.score:.2f}")
+        if result.highlights:
+            click.echo("Highlights:")
+            click.echo(result.highlights)
+        else:
+            click.echo("Content preview:")
+            click.echo(result.content[:200] + "...")
+        click.echo("-" * 80)
+
+@cli.command()
+@click.option("-p", "--paths", required=True, multiple=True,
+              help="Paths to monitor")
+@click.option("-i", "--index-path", required=True,
+              help="Path to store search index")
+@click.option("-e", "--extensions", multiple=True,
+              help="Allowed file extensions")
+@click.option("-s", "--max-size", default=100,
+              help="Maximum file size in MB")
+def monitor(paths, index_path, extensions, max_size):
+    """Monitor directories for changes and maintain search index."""
+    try:
+        allowed_extensions = set(extensions) if extensions else None
+        max_file_size = max_size * 1024 * 1024  # Convert to bytes
+
+        search = UnifiedSearch(
+            monitored_paths=paths,
+            index_path=index_path,
+            allowed_extensions=allowed_extensions,
+            max_file_size=max_file_size
+        )
+
+        click.echo("Indexing existing files...")
+        with click.progressbar(
+            length=100, label="Progress"
+        ) as bar:
+            def progress_callback(file_path, current, total):
+                bar.update(current / total * 100)
+            search.index_existing_files(callback=progress_callback)
+
+        click.echo("\nMonitoring for changes (Ctrl+C to stop)...")
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            search.cleanup()
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+
+@cli.command()
+@click.option("-p", "--path", required=True,
+              help="Path to file")
+@click.option("-i", "--index-path", required=True,
+              help="Path to search index")
+def preview(path, index_path):
+    """Preview indexed document content."""
+    try:
+        search = UnifiedSearch(
+            monitored_paths=[],  # No monitoring needed
+            index_path=index_path
+        )
+
+        preview = search.get_document_preview(path)
+        if preview:
+            click.echo(f"\nDocument: {preview['title']}")
+            click.echo(f"\nSummary:\n{preview['summary']}")
+            click.echo(f"\nKeywords: {', '.join(preview['keywords'])}")
+            click.echo(f"\nContent Preview:\n{preview['content']}")
+            click.echo("\nMetadata:")
+            click.echo(json_dumps(preview['metadata']))
+        else:
+            click.echo("Document not found in index.")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+###########################################
+
 if __name__ == "__main__":
     cli(prog_name="duckduckgo_search")
